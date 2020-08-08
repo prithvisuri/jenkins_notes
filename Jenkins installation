@@ -60,7 +60,8 @@ set git path in jenkins|(integrate git with jenkins)
 =======================|
 sudo su -
 yum install git -y
-1.in jenkins install git plugins(github)
+
+1.in jenkins install github plugins(GitHub Integration Plugin)
 2.manage jenkin>global tool configuration>Name:github,path:git
 
 -------------------------------------------------------------------------------------------
@@ -68,19 +69,17 @@ maven setup |(integrate maven with jenkins)
 ============|
 sudo su -
 goto cd /opt
-**download Binary tar.gz archive form maven website (copy the link)
-wget
-http://mirrors.estointernet.in/apache/maven/maven-3/3.6.2/binaries/apache-maven-3.6.2-bin.tar.
-gz
+**download Binary tar.gz archive form maven website(https://maven.apache.org/download.cgi)
+wget http://mirrors.estointernet.in/apache/maven/maven-3/3.6.2/binaries/apache-maven-3.6.2-bin.tar.gz
 ls
-**to extract>> tar -xvzf
-tar -xvzf apache-maven-3.6.1-bin.tar.gz
+**to extract>> tar -xvzf >> tar -xvzf apache-maven-3.6.1-bin.tar.gz
 cd apache-maven-3.6.1(to check)
 mv apache-maven-3.6.1 maven
 pwd
 copy the path
 /opt/maven/
-cd ~ (or) cd /root
+
+cd ~ 
 ls -la
 vi .bash_profile
 JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.222.b10-0.47.amzn1.x86_64
@@ -90,8 +89,9 @@ PATH=$PATH:$JAVA_HOME:$M2_HOME:$M2:$HOME/bin
 echo $M2_HOME
 echo $PATH
 /opt/maven/apache-maven-3.6.1
+
 mvn --version
-install maven plugins (maven integration and maven invoker)
+install maven plugins (maven integration, maven invoker)
 past in jenkins path for maven global tool config (Name: M2_HOME, path: /opt/maven)
 apply
 save
