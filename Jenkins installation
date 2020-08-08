@@ -1,0 +1,216 @@
+jenkins installation-AWS-DevOPs
+================================
+1.launch ec2 instance
+2.sudo su -
+yum update -y
+java -version
+**(remove the old version of java>> yum remove java-1.7*)
+sudo yum install java-1.8* -y (or) yum -y install java-1.8.0-openjdk
+java -version
+-------------------------------------------------------------------------------------------
+java path 
+==========
+find /usr/lib/jvm/java-1.8* | head -n 3
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.222.b10-0.47.amzn1.x86_64(look for this)
+ls -l /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.222.b10-0.47.amzn1.x86_64/jre (just to check)
+cd ~ (or )cd /root
+ls -la
+vi .bash_profile
+JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.222.b10-0.47.amzn1.x86_64
+PATH=$PATH:$HOME/bin:$JAVA_HOME
+:wq
+echo $JAVA_HOME
+**/usr/lib/jvm/jre
+exit
+sudo su -
+echo $JAVA_HOME
+**/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.222.b10-0.47.amzn1.x86_64
+path updated!!!
+-------------------------------------------------------------------------------------------
+install jenkins 
+===============
+sudo wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat/jenkins.repo
+sudo rpm --import https://jenkins-ci.org/redhat/jenkins-ci.org.key
+sudo yum install jenkins -y
+
+service jenkins status
+service jenkins start
+
+copy the IPv4 Public IP:52.66.200.184 address of the server and open a browser
+52.66.200.184:8080
+cat /var/lib/jenkins/secrets/initialAdminPassword
+7a66787902af4049a8fa904193db1123
+copy the password
+past
+change admin password
+will open jenkins!!!
+-------------------------------------------------------------------------------------------
+set java path in jenkins 
+========================
+echo $JAVA_HOME
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.222.b10-0.47.amzn1.x86_64
+
+> manage jenkins>global tool configuration>add jdk
+name:JAVA_HOME
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.212.b04-1.el8_0.x86_64/
+apply
+save
+-------------------------------------------------------------------------------------------
+set git path in jenkins|(integrate git with jenkins)
+=======================|
+sudo su -
+yum install git -y
+1.in jenkins install git plugins(github)
+2.manage jenkin>global tool configuration>Name:github,path:git
+
+-------------------------------------------------------------------------------------------
+maven setup |(integrate maven with jenkins)
+============|
+sudo su -
+goto cd /opt
+**download Binary tar.gz archive form maven website (copy the link)
+wget
+http://mirrors.estointernet.in/apache/maven/maven-3/3.6.2/binaries/apache-maven-3.6.2-bin.tar.
+gz
+ls
+**to extract>> tar -xvzf
+tar -xvzf apache-maven-3.6.1-bin.tar.gz
+cd apache-maven-3.6.1(to check)
+mv apache-maven-3.6.1 maven
+pwd
+copy the path
+/opt/maven/
+cd ~ (or) cd /root
+ls -la
+vi .bash_profile
+JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.222.b10-0.47.amzn1.x86_64
+M2_HOME=/opt/apache-maven-3.6.2
+M2=$M2_HOME/bin
+PATH=$PATH:$JAVA_HOME:$M2_HOME:$M2:$HOME/bin
+echo $M2_HOME
+echo $PATH
+/opt/maven/apache-maven-3.6.1
+mvn --version
+install maven plugins (maven integration and maven invoker)
+past in jenkins path for maven global tool config (Name: M2_HOME, path: /opt/maven)
+apply
+save
+-------------------------------------------------------------------------------------------
+execute maven job |
+------------------|
+in jenkins click on new item
+Name: my_first_job
+select maven or freestyle project
+then click ok
+General tab>>
+write the description of the project
+source code management>git> repo-url from github
+build trigger>>
+build>root pom:pom.xml
+goals and options: clean install package
+apply>save> build now
+checkout workspace!!!
+-------------------------------------------------------------------------------------------
+setup tomcat server |
+====================|
+setting tomcat server as target environment to host the war file from the successful build in
+jenkins
+1.launch ec2 instance
+2.sudo su -
+yum update -y
+cd ~ (or) cd /root
+yum remove java-1.7* -y
+yum install java-1.8* -y
+java -version
+**download Binary tar.gz file form tomcat website (copy the link)
+cd /opt
+wget http://mirrors.fibergrid.in/apache/tomcat/tomcat-8/v8.5.35/bin/apache-tomcat-8.5.35.tar.gz
+ls> tar -xvzf apache-tomcat-8.5.35.tar.gz
+ls> mv apache-tomcat-8.5.35 tomcat
+**to start (or) stop tomcat
+cd bin
+./startup.sh to start
+./shutdown.sh to stop
+in browser ip addr:8080 to see the tomcat server
+-------------------------------------------------------------------------------------------
+**shortcut to start and stop tomcat |
+------------------------------------|
+create link files for tomcat startup.sh and shutdown.sh
+ln -s /opt/apache-tomcat-8.5.35/bin/startup.sh /usr/local/bin/tomcatup
+ln -s /opt/apache-tomcat-8.5.35/bin/shutdown.sh /usr/local/bin/tomcatdown
+tomcatup
+tomcatdown
+-------------------------------------------------------------------------------------------
+**to change tomcat port number |
+-------------------------------|
+Using unique ports for each application is a best practice in an environment.
+But tomcat and Jenkins runs on ports number 8080.
+Hence lets change tomcat port number to 8090.
+Change port number in conf/server.xml file under tomcat/conf
+cd /opt/apache-tomcat-8.5.35/conf
+# update port number in the "connecter port" field in server.xml
+# restart tomcat after configuration update
+tomcatdown
+tomcatup
+Check point :
+Access tomcat application from browser on prot 8090
+---------------------------------------------------|
+**add the port number in the Security group in aws |
+---------------------------------------------------|
+http://<Public_IP>:8090
+now application is accessible on port 8090.
+but tomcat application does not allow to login from browser.
+changing a default parameter in context.xml does address this issue
+-------------------------------------------------------------------------------------------
+to access the tomcat outside the server |
+----------------------------------------|
+**search for context.xml
+find / -name context.xml
+above command gives 3 context.xml files.
+comment (<!--/-->) Value ClassName field on files which are under webapp directory.
+vi /opt/tomcat/webapps/manager/META-INF/context.xml
+vi /opt/tomcat/webapps/host-manager/META-INF/context.xml
+<!-- <Valve className="org.apache.catalina.valves.RemoteAddrValve"
+allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1" /> -->
+After that restart tomcat services to effect these changes
+tomcatdown
+tomcatup
+-------------------------------------------------------------------------------------------
+**to add users in tomcat|
+------------------------|
+Update users information in the tomcat-users.xml file.
+goto tomcat home directory and Add below users to conf/tomcat-user.xml file.
+<role rolename="manager-gui"/>
+<role rolename="manager-script"/>
+<role rolename="manager-jmx"/>
+<role rolename="manager-status"/>
+<user username="admin" password="admin" roles="manager-gui, manager-script,
+manager-jmx, manager-status"/>
+<user username="deployer" password="deployer" roles="manager-script"/>
+<user username="tomcat" password="s3cret" roles="manager-gui"/>
+Restart service and try to login to tomcat application from the browser.
+This time it should be Successful
+-------------------------------------------------------------------------------------------
+Deploy a war file on Tomcat VM using Jenkins |
+=============================================|
+to run a job in jenkins and deploy inn tomcat
+in jenkins,Manage Jenkins>manage plugins>available>
+search for>> deploy to container>install
+new item> Name:deploy_on_tomcat_server> freestyle/maven> description> git>
+build:pom.xml,clean install package>
+post build actions: deploy war/ear to a container> WAR/EAR files:**/*.war> add
+container:tomcat 8.x>
+Credentials:add, jenkins, Username:deployer, password:deployer, ID:deployer_user,
+Description:user to deploy on tomcat
+Credentials:deployer> URL:http://35.154.115.156:8090
+apply,save
+build now
+http://35.154.115.156:8090/webapp/
+cd /opt/tomcat/webapps/webapp(to check)
+-------------------------------------------------------------------------------------------
+Poll scm|
+--------|
+*****
+to deploy to tomcat server
+add plugin : deploy to container
+-------------------------------------------------------------------------------------------
