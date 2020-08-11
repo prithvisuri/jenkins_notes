@@ -4,6 +4,12 @@
 yum install docker 
 service docker start
 sudo usermod -a -G docker ec2-user
+
+docker version
+docker --version
+docker info
+docker --info
+docker
 ================================================================================
 docker-compose(docker hub)
 --------------
