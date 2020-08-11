@@ -1,0 +1,500 @@
+##docker## 
+==========
+
+yum install docker 
+service docker start
+sudo usermod -a -G docker ec2-user
+================================================================================
+docker-compose(docker hub)
+--------------
+sudo curl -L "https://github.com/docker/compose/releases/download/1.25.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+docker-compose --version
+================================================================================
+docker search
+-------------
+docker search tomcat
+(to search the image dockerhub)
+
+docker pull, docker push 
+-------------------------	
+docker pull tomcat:latest(to download the image dockerhub)
+docker push <image id> (log in to your dockerhub first)	
+
+docker images
+-------------
+docker images (to check the image downloaded)(only read)
+
+docker create
+-------------
+docker create hello-world
+
+docker start
+------------
+docker start <container-id> (no output shown)
+docker log <id> (to get the output)
+docker start -a <id> (-a attached)(shows output)
+
+docker log
+----------
+docker log <id> (to get the output)
+
+docker ps
+---------
+docker ps (to see only running containers)
+docker ps -a (to see all running containers and stopped containers)
+docker ps --all(to see the all the container sever created)
+docker container ls
+
+docker system prune
+--------------------
+docker system prune(to remove all containers)
+
+docker run
+----------
+docker run= docker create container + docker start container
+
+docker run <image name>
+docker run busybox echo hi there
+docker run busybox ls
+docker run busybox ping google.com (keeps up and running)>>docker ps
+
+docker stop
+-----------
+docker stop <cont id> (will give time for the process to stop)
+
+docker kill
+-----------
+docker kill <cont id> (will not give time for the process to stop)
+================================================================================
+exec
+----
+this command is used when the container is up and running and used when a command has to be given
+
+-it
+---
+-it(input, output in termenal)
+-i (accept input standred)
+-t (shoe the output in terminal)
+================================================================================
+================================================================================
+redis image
+------------
+
+docker run redis
+normally we open redis-server then open redis-cli in new terminal
+
+docker run redis                                                                            }
+docker exec -it <redis container-id> redis-cli (in second terminal)
+
+docker exec -it <redis container-id> sh (SH lets inside full access of the container in shell) 
+redis-cli
+   
+docker run -it busybox sh
+================================================================================
+================================================================================
+custom image/docker project-1 section-3
+-----------------------------
+redis
+-----
+dockerfile>> docker client>> docker server> >usable image
+
+dockerfile
+FROM alpine
+apk add --update redis
+CMD ["redis-server"]
+
+docker build . (builds image for the dockerfile)
+docker run <image id>
+
+docker build -t prithvisuri/redis:latest .(-t=tag)
+docker run prithvisuri/redis
+
+docker run -it alpine sh
+second terminal>> docker commit -c 'CMD ["redis-server"]' <alpine image-id>
+================================================================================
+================================================================================
+custom image/docker project-2 section-4
+---------------------------------------
+nodejs
+-------
+need 
+1.package.json
+2.index.js
+3.Dockerfile
+
+Dockerfile
+------------
+FROM node:alpine
+WORKDIR /usr/app      (/var/app, /home/app)
+COPY (./ ./)
+RUN npm install
+CMD ["npm", "start"]
+
+docker build -t prithvisuri/simpleweb .
+docker run -p 8080:8080 prithvisuri/simpleweb
+browser>>localhost:8080
+-------------
+docker build -t prithvisuri/simpleweb .
+docker run -p 8080:8080 prithvisuri/simpleweb
+docker exec -it <container id> sh
+-------------
+changing index.js file will rerun the cashe >>index.js >>bye there
+to avoid rerun of cashe:
+Dockerfile
+------------
+FROM node:alpine
+WORKDIR /usr/app      (/var/app, /home/app)
+COPY (./package.json ./)
+RUN npm install
+COPY ./ ./
+CMD ["npm", "start"]
+
+================================================================================
+================================================================================
+custom image/docker project-3 section-5 >>visitsapp
+-----------------------------
+nodejs+redis 
+
+need
+----
+package.json
+index.js
+Dockerfile
+docker compose.yml
+
+1.Dockerfile
+-----------
+FROM node:alpine
+WORKDIR /usr/app      (/var/app, /home/app)
+COPY (./package.json ./)
+RUN npm install
+COPY ./ ./
+CMD ["npm", "start"]
+
+docker build -t prithvisuri/visits .
+docker run prithvisuri/visits
+
+launch redis server
+-------------------
+docker run redis
+
+docker compose.yml (for connecting two different containers)
+------------------
+version: "3"
+services:
+  redis-server:
+    image: "redis"
+  node-app:
+    restart: on-failure
+    build: .
+    ports:
+      - "4001:8081"
+
+>>docker-comppse up
+
+docker-comppse up -d
+docker-compose down
+
+docker compose
+--------------
+docker-compose --build  >>docker run + docker build 
+docker-compose up= docker run <image>
+docker-compose up -d (-d= detached)background
+docker-compose down
+docker-compose ps
+docker-compose ip 
+
+restart policies>> 1)no 2)always 3)on failuer 4)unless stopped
+
+================================================================================
+================================================================================
+custom image/docker project-4/section-6 >>production grade workflow
+-----------------------------
+install jode js in computer
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+. ~/.nvm/nvm.sh
+nvm install node
+node -e "console.log('Running Node.js ' + process.version)"
+---------------------
+create a new reactapp>>
+npx create-react-app frontend
+cd frontend
+---------------------
+to test the react app in node>>
+npm run test
+npm run build
+npm run start
+
+Dockerfile.dev
+--------------
+FROM node:alpine
+WORKDIR '/app' 
+COPY package.json .
+RUN npm install
+COPY . .
+CMD [ "npm", "run", "start" ]
+
+docker build -f Dockrerfile.dev
+delete node_modules folder
+
+docker run -it -p 3000:3000 CONTAINER_ID
+docker run -p 3000:3000 1ccc21e975d6
+
+================================================================================
+volumes
+-------
+docker build-f Dockerfile.dev .
+docker run -it -p 3000:3000 -v $(pwd):/app container-id
+docker run -it -p 3000:3000 -v /app/node_modules -v $(pwd):/app container-id
+src/app.js>> hi threr!!!!
+
+create a docker-compose file for easy command
+
+docker-compose.yml 
+------------------
+version: '3'
+
+services: 
+    web:
+         stdin_open: true
+         build: 
+             context: .
+             dockerfile: Dockerfile.dev
+         ports: 
+             - "3000:3000"
+         volumes: 
+              - /app/node_modules
+              - .:/app
+
+docker-compose up
+docker-compose down
+docker-compose up --build
+
+----------------------------------------
+for runnig test in the container
+1ts option (changing app.test.js file)
+docker run -it <container-id> npm run test
+docker-compose up >>(in second terminal) docker exec -it <container-id> npm run test
+
+2nd option
+docker-compose.yml
+------------------
+version: '3'
+
+services: 
+    web:
+         stdin_open: true
+         build: 
+             context: .
+             dockerfile: Dockerfile.dev
+         ports: 
+             - "3000:3000"
+         volumes: 
+              - /app/node_modules
+              - .:/app
+    test:
+        build: 
+            context: .
+            dockerfile: Dockerfile.dev
+        volume:
+            - /app/node_modules
+            - .:/app
+        command: ["npm", "run", "test"]
+ 
+docker-compose up --build
+
+------------------------------------------
+production server
+-----------------
+for runnig production env build nginx in the container(production env)
+create dockerfile
+
+Dockerfile
+----------
+FROM node:alpine as builder
+WORKDIR '/app'
+COPY package.json .
+RUN npm install
+COPY . .
+RUN mpm run build
+
+FROM nginx
+COPY --from=builder /app/build /usr/share/nginx/html
+..........
+docker build .
+docker run -p 8080:80 container-id
+================================================================================
+================================================================================
+Continuous Integration and Deployment with AWS project-4 Section 7
+------------------------------------------------------------------
+need 
+----
+github,travis,aws
+
+git
+---
+cd frontend
+git init 
+git add .
+git commit -m ""
+git remote add origin https://github.com/prithvisuri/docker-react.git
+git push origin master
+
+tavis
+-----
+login
+add repositry
+
+.travis.yml
+-----------
+language: generic
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - docker build -t prithvi/docker-react -f Dockerfile.dev .
+
+script:
+  - docker run -e CI=true prithvi/docker-react npm run test
+
+
+script:
+  - docker run -e CI=true prithvi/docker-react npm run test
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+================================================================================
+docker volume ls
+docker volume create myvolume-1
+docker inspect myvolume-1 
+docker volume rm myvolume-1 
+docker volume prune(remove all volumes)
+
+docker inspect mysql
+
+
+docker run redis
+docker exec -it redis-id redis-cli (single comanda exec)-it(input, output in termenal)
+docker exec -it container-id sh (SH lets inside access of the container in shell)
+docker run -it image-name sh
+
+
+docker run --name tomcat-container -p 8080:8080 tomcat:latest
+docker run -it --name <container_Name> <image_name>:<image_version/tag>
+docker run --name tomcat-container(giving container name) -p 8080(external port):8080(internal port) tomcat:latest(from the image)
+kill=ctrl+c
+
+**to run a docker images in detached mode
+docker -d run --name romcat-container -p 8080:8080 tomcat:latest
+docker run -d --name <container_Name> <image_name>:<image_version/tag>
+
+docker container run --publish 80:80 nginx
+docker container run --publish 80:80 --detach nginx
+docker container run --publish 80:80 --detach --name webhost nginx
+docker container run --publish 8081:80 --detach --name webhost nginx
+docker container run -d -p 8081:80 image-name --name webhost-nginx
+in browser past the ip add.
+
+docker container run -d -p 3306:3306 --name mysqldb --env MYSQL_RANDOM_ROOT_PASSWORD=yes mysql
+
+docker container logs mysqldb eelohngaiTei1veeLaedoh8ahkaekah9
+
+docker network ls
+docker network -f drive=bridge
+docker nwtwork ls --format "{{.ID}}:{{.Driver}}"
+
+
+docker system prune(to delete)
+
+docker image build -t <name-image>:<tag> /root/prithvi-docker<path>
+docker run -d -p 8080:80 <inage-name>:<tag>
+
+docker commit contianer-id prithvisuri/test-image (to create a image from container)
+
+
+
+
+docker pull jenkins 
+docker run --name myjenkins -v myvolume-1:/var/jenkins_home -p 8080:8080 -p 50000:50000 jenkins
+
+docker run --name my-jenkins-1 -v volume-1:/var/jenkins_home -p 9090:8080 -p 60000:50000 jenkins
+c28dd20329e9486491f7c28a289bfb7a
+
+
+docker run --name my-jenkins-1 -v /root/new-folder:/var/jenkins_home -p 9090:8080 -p 60000:50000 jenkins (sudo chown -R 1000:1000)
+
+
+
+
+
+
+docker container run --publish 80:80 nginx
+docker container run --publish 80:80 --detach nginx
+docker container run --publish 80:80 --detach --name webhost nginx
+docker container run --publish 8081:80 --detach --name webhost nginx
+docker container run -d -p 8081:80 image-name --name webhost-nginx
+
+
+in browser past the ip add.
+
+docker container stop <id>
+
+docker container ls
+
+docker container run -d -p 3306:3306 --name mysqldb --env MYSQL_RANDOM_ROOT_PASSWORD=yes mysql
+
+docker container logs mysqldb eelohngaiTei1veeLaedoh8ahkaekah9
+
+docker network ls
+docker network -f drive=bridge
+docker nwtwork ls --format "{{.ID}}:{{.Driver}}"
+
+
+docker system prune(to delete)
+
+docker image build -t <name-image>:<tag> /root/prithvi-docker<path>
+docker run -d -p 8080:80 <inage-name>:<tag>
+
+docker commit contianer-id prithvisuri/test-image (to create a image from container)
+
+docker inspect mysql
+
+docker volume ls
+docker volume create myvolume-1
+docker inspect myvolume-1 
+docker volume rm myvolume-1 
+docker volume prune(remove all volumes)
+
+docker pull jenkins 
+docker run --name myjenkins -v myvolume-1:/var/jenkins_home -p 8080:8080 -p 50000:50000 jenkins
+
+docker run --name my-jenkins-1 -v volume-1:/var/jenkins_home -p 9090:8080 -p 60000:50000 jenkins
+c28dd20329e9486491f7c28a289bfb7a
+
+
+docker run --name my-jenkins-1 -v /root/new-folder:/var/jenkins_home -p 9090:8080 -p 60000:50000 jenkins (sudo chown -R 1000:1000)
+
+
+
+docker run -it alpine sh
+apk add --update redis
+new terminal: docker commit -c 'CMD ["redis-server"]' 4e8188893ee0 
+
+taging a image: docker tag 4e8188893ee0 prithvisuri/alpine:latest 
+docker build -t prithvisuri/simpleweb .
