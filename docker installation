@@ -19,17 +19,16 @@ docker-compose --version
 ================================================================================
 docker search
 -------------
-docker search tomcat
-(to search the image dockerhub)
+docker search tomcat(to search the image dockerhub)
 
 docker pull, docker push 
 -------------------------	
-docker pull tomcat:latest(to download the image dockerhub)
-docker push <image id> (log in to your dockerhub first)	
+docker pull tomcat:latest   (to download the image dockerhub)
+docker push <image id>      (log in to your dockerhub first)	
 
 docker images
 -------------
-docker images (to check the image downloaded)(only read)
+docker images  (to check the image downloaded)(only read)
 
 docker create
 -------------
@@ -37,29 +36,27 @@ docker create hello-world
 
 docker start
 ------------
-docker start <container-id> (no output shown)
-docker log <id> (to get the output)
-docker start -a <id> (-a attached)(shows output)
+docker start <container-id>    (no output shown)
+docker start -a <id>           (-a attached)(shows output)
 
-docker log
+docker logs
 ----------
-docker log <id> (to get the output)
+docker logs <container-id>  (to get the output)
 
 docker ps
 ---------
-docker ps (to see only running containers)
-docker ps -a (to see all running containers and stopped containers)
-docker ps --all(to see the all the container sever created)
+docker ps          (to see only running containers)
+docker ps -a       (to see all running containers and stopped containers)
+docker ps --all    (to see the all the container sever created)
 docker container ls
 
 docker system prune
 --------------------
-docker system prune(to remove all containers)
+docker system prune  (to remove all containers)
 
 docker run
 ----------
 docker run= docker create container + docker start container
-
 docker run <image name>
 docker run busybox echo hi there
 docker run busybox ls
@@ -67,11 +64,25 @@ docker run busybox ping google.com (keeps up and running)>>docker ps
 
 docker stop
 -----------
-docker stop <cont id> (will give time for the process to stop)
+docker stop <cont id>  (will give time for the process to stop)
+
+remove container
+----------------
+docker rm <container-id>
+docker rm -f <container-id> (remove forcefully)
 
 docker kill
 -----------
 docker kill <cont id> (will not give time for the process to stop)
+
+running processes
+-----------------
+docker top <container-id>
+
+container name
+--------------
+-- name <give name> <container image name>
+  docker run --name prithvi-nginx -d -p 80:80 nginx
 ================================================================================
 exec
 ----
