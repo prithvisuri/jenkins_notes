@@ -88,6 +88,23 @@ container name
 --------------
 -- name <give name> <container image name>
   docker run --name prithvi-nginx -d -p 80:80 nginx
+  
+docker container inspect
+------------------------
+docker container inspect <container-id>
+
+docker container stats
+-----------------------
+docker container stats <container-id>
+
+docker network 
+--------------
+docker network ls
+docker network -f driver=bridge
+docker container inspect <container-id>
+docker network inspect <network-id>
+docker network create <name of the network>
+docker network create driver=bridge
 ================================================================================
 exec
 ----
