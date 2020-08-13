@@ -1,2 +1,18 @@
 docker run --name prithvi-nginx -d -p 80:80 nginx
   
+docker run --name proxyserver -d -p 80:80 nginx
+docker run --name webserver -d -p 8080:80 httpd
+
+docker run -d -p 3306:3306 --name mysqldb --env MYSQL_ROOT_PASSWORD=yes mysql 
+<<docker logs <container-id> for mysqldb passpwod>>
+docker run -it --network mysql-network --rm mysql mysql -hsome-mysql -uexample-user -p<<need correction>>
+
+
+
+docker container run -it --name tomcat1 tomcat bash <<to get into the container>>
+
+docker container run -d -p 80808:80 --name my-nginx --network my-network nginx (to start a container with own network)
+docker network connect <network-nmae> <container-id> (fo connecting a running container to a network)
+docker network dissconnect <network-nmae> <container-id> (fo disconnecting a running container to a network)
+
+docker exec -it <container-id> ping <container-id> (to check the connectivity of the container in same network)
