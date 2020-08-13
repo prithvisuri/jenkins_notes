@@ -105,6 +105,15 @@ docker container inspect <container-id>
 docker network inspect <network-id>
 docker network create <name of the network>
 docker network create driver=bridge
+
+image layers
+------------
+docker history <container-id>
+
+image tag
+---------
+docker image tag tomcat prithvisuri/tomcat
+docker image tag tomcat:prtihvi
 ================================================================================
 exec
 ----
