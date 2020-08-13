@@ -79,6 +79,11 @@ running processes
 -----------------
 docker top <container-id>
 
+how mant processes running in host machine
+--------------------------------------------
+ps aux
+ps aux | grep nginx
+
 container name
 --------------
 -- name <give name> <container image name>
