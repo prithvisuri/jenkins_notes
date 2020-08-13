@@ -115,6 +115,12 @@ image tag
 docker image tag tomcat prithvisuri/tomcat
 docker image tag tomcat:prtihvi
 ================================================================================
+dockerfile
+----------
+docker build -t prithvi/prithvi .
+docker run -d -p 8080:8080 --name prithvisuri nginx
+
+================================================================================
 exec
 ----
 this command is used when the container is up and running and used when a command has to be given
