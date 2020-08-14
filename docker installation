@@ -114,6 +114,13 @@ image tag
 ---------
 docker image tag tomcat prithvisuri/tomcat
 docker image tag tomcat:prtihvi
+
+
+docker volumes
+---------------
+docker volumes ls
+
+
 ================================================================================
 dockerfile
 ----------
