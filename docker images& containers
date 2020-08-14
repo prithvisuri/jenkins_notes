@@ -1,18 +1,306 @@
-docker run --name prithvi-nginx -d -p 80:80 nginx
-  
-docker run --name proxyserver -d -p 80:80 nginx
-docker run --name webserver -d -p 8080:80 httpd
-
-docker run -d -p 3306:3306 --name mysqldb --env MYSQL_ROOT_PASSWORD=yes mysql 
-<<docker logs <container-id> for mysqldb passpwod>>
-docker run -it --network mysql-network --rm mysql mysql -hsome-mysql -uexample-user -p<<need correction>>
 
 
 
-docker container run -it --name tomcat1 tomcat bash <<to get into the container>>
+=================================================================================================================================
 
-docker container run -d -p 80808:80 --name my-nginx --network my-network nginx (to start a container with own network)
-docker network connect <network-nmae> <container-id> (fo connecting a running container to a network)
-docker network dissconnect <network-nmae> <container-id> (fo disconnecting a running container to a network)
 
-docker exec -it <container-id> ping <container-id> (to check the connectivity of the container in same network)
+
+redis image
+------------
+
+docker run redis
+normally we open redis-server then open redis-cli in new terminal
+
+docker run redis                                                                            }
+docker exec -it <redis container-id> redis-cli (in second terminal)
+
+docker exec -it <redis container-id> sh (SH lets inside full access of the container in shell) 
+redis-cli
+   
+docker run -it busybox sh
+================================================================================
+================================================================================
+custom image/docker project-1 section-3
+-----------------------------
+redis
+-----
+dockerfile>> docker client>> docker server> >usable image
+
+dockerfile
+FROM alpine
+apk add --update redis
+CMD ["redis-server"]
+
+docker build . (builds image for the dockerfile)
+docker run <image id>
+
+docker build -t prithvisuri/redis:latest .(-t=tag)
+docker run prithvisuri/redis
+
+docker run -it alpine sh
+second terminal>> docker commit -c 'CMD ["redis-server"]' <alpine image-id>
+================================================================================
+================================================================================
+custom image/docker project-2 section-4
+---------------------------------------
+nodejs
+-------
+need 
+1.package.json
+2.index.js
+3.Dockerfile
+
+Dockerfile
+------------
+FROM node:alpine
+WORKDIR /usr/app      (/var/app, /home/app)
+COPY (./ ./)
+RUN npm install
+CMD ["npm", "start"]
+
+docker build -t prithvisuri/simpleweb .
+docker run -p 8080:8080 prithvisuri/simpleweb
+browser>>localhost:8080
+-------------
+docker build -t prithvisuri/simpleweb .
+docker run -p 8080:8080 prithvisuri/simpleweb
+docker exec -it <container id> sh
+-------------
+changing index.js file will rerun the cashe >>index.js >>bye there
+to avoid rerun of cashe:
+Dockerfile
+------------
+FROM node:alpine
+WORKDIR /usr/app      (/var/app, /home/app)
+COPY (./package.json ./)
+RUN npm install
+COPY ./ ./
+CMD ["npm", "start"]
+
+================================================================================
+================================================================================
+custom image/docker project-3 section-5 >>visitsapp
+-----------------------------
+nodejs+redis 
+
+need
+----
+package.json
+index.js
+Dockerfile
+docker compose.yml
+
+1.Dockerfile
+-----------
+FROM node:alpine
+WORKDIR /usr/app      (/var/app, /home/app)
+COPY (./package.json ./)
+RUN npm install
+COPY ./ ./
+CMD ["npm", "start"]
+
+docker build -t prithvisuri/visits .
+docker run prithvisuri/visits
+
+launch redis server
+-------------------
+docker run redis
+
+docker compose.yml (for connecting two different containers)
+------------------
+version: "3"
+services:
+  redis-server:
+    image: "redis"
+  node-app:
+    restart: on-failure
+    build: .
+    ports:
+      - "4001:8081"
+
+>>docker-comppse up
+
+docker-comppse up -d
+docker-compose down
+
+docker compose
+--------------
+docker-compose --build  >>docker run + docker build 
+docker-compose up= docker run <image>
+docker-compose up -d (-d= detached)background
+docker-compose down
+docker-compose ps
+docker-compose ip 
+
+restart policies>> 1)no 2)always 3)on failuer 4)unless stopped
+
+================================================================================
+================================================================================
+custom image/docker project-4/section-6 >>production grade workflow
+-----------------------------
+install jode js in computer
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+. ~/.nvm/nvm.sh
+nvm install node
+node -e "console.log('Running Node.js ' + process.version)"
+---------------------
+create a new reactapp>>
+npx create-react-app frontend
+cd frontend
+---------------------
+to test the react app in node>>
+npm run test
+npm run build
+npm run start
+
+Dockerfile.dev
+--------------
+FROM node:alpine
+WORKDIR '/app' 
+COPY package.json .
+RUN npm install
+COPY . .
+CMD [ "npm", "run", "start" ]
+
+docker build -f Dockrerfile.dev
+delete node_modules folder
+
+docker run -it -p 3000:3000 CONTAINER_ID
+docker run -p 3000:3000 1ccc21e975d6
+
+================================================================================
+volumes
+-------
+docker build-f Dockerfile.dev .
+docker run -it -p 3000:3000 -v $(pwd):/app container-id
+docker run -it -p 3000:3000 -v /app/node_modules -v $(pwd):/app container-id
+src/app.js>> hi threr!!!!
+
+create a docker-compose file for easy command
+
+docker-compose.yml 
+------------------
+version: '3'
+
+services: 
+    web:
+         stdin_open: true
+         build: 
+             context: .
+             dockerfile: Dockerfile.dev
+         ports: 
+             - "3000:3000"
+         volumes: 
+              - /app/node_modules
+              - .:/app
+
+docker-compose up
+docker-compose down
+docker-compose up --build
+
+----------------------------------------
+for runnig test in the container
+1ts option (changing app.test.js file)
+docker run -it <container-id> npm run test
+docker-compose up >>(in second terminal) docker exec -it <container-id> npm run test
+
+2nd option
+docker-compose.yml
+------------------
+version: '3'
+
+services: 
+    web:
+         stdin_open: true
+         build: 
+             context: .
+             dockerfile: Dockerfile.dev
+         ports: 
+             - "3000:3000"
+         volumes: 
+              - /app/node_modules
+              - .:/app
+    test:
+        build: 
+            context: .
+            dockerfile: Dockerfile.dev
+        volume:
+            - /app/node_modules
+            - .:/app
+        command: ["npm", "run", "test"]
+ 
+docker-compose up --build
+
+------------------------------------------
+production server
+-----------------
+for runnig production env build nginx in the container(production env)
+create dockerfile
+
+Dockerfile
+----------
+FROM node:alpine as builder
+WORKDIR '/app'
+COPY package.json .
+RUN npm install
+COPY . .
+RUN mpm run build
+
+FROM nginx
+COPY --from=builder /app/build /usr/share/nginx/html
+..........
+docker build .
+docker run -p 8080:80 container-id
+================================================================================
+================================================================================
+Continuous Integration and Deployment with AWS project-4 Section 7
+------------------------------------------------------------------
+need 
+----
+github,travis,aws
+
+git
+---
+cd frontend
+git init 
+git add .
+git commit -m ""
+git remote add origin https://github.com/prithvisuri/docker-react.git
+git push origin master
+
+tavis
+-----
+login
+add repositry
+
+.travis.yml
+-----------
+language: generic
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - docker build -t prithvi/docker-react -f Dockerfile.dev .
+
+script:
+  - docker run -e CI=true prithvi/docker-react npm run test
+
+
+script:
+  - docker run -e CI=true prithvi/docker-react npm run test
+
+
+
+
+
+
+
+
+
+
+
+
+
+
