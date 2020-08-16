@@ -1,9 +1,49 @@
+image and container
+--------------------
+docker run -d --name mysql-test -e MYSQL_ROOT_PASSWORD=mypassword mysql:latest
+docker run -d --name mysql-test -e "MYSQL_ROOT_PASSWORD=mypassword" --mount type=volume,source=mysql-db,destination=/var/lib/mysql mysql
+docekr exec -it mysql-test bash
+apt-get install mysql-client -y
+mysql -u root -p mypassword -h 172.17.0.2 -P 3306
+
+create db in mysql
+------------------
+create database prithvi_db;
+CREATE TABLE Persons ( PersonID int, LastName varchar(255), FirstName varchar(255), Address varchar(255), City varchar(255) );
+INSERT INTO Persons (PersonID, LastName, FirstName, Address, City)VALUES (14, 'B. Erichsen', ’Tom’, ‘Skagen 216’, 'Norway');
+INSERT INTO Persons (PersonID, LastName, FirstName, Address, City)VALUES (17, 'Zbyszek', ’Wolski’, ‘Keskuskatu 45’, ‘Finland'); 
 
 
+docker-compose.yml
+---------------
+version: '3' #Version of YML file
 
-=================================================================================================================================
+services:
+  db:
+    image: mysql:5.7
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: mypassword
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpressuser
+      MYSQL_PASSWORD: wordpress
 
+  wordpress:
+    depend-on:
+      - db
+    image: wordpress:latest
+    ports:
+      - "8080:80"
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpressuser
+      WORDPRESS_DB_PASSWORD: wordpress
 
+volumes:
+  db_data:
 
 redis image
 ------------

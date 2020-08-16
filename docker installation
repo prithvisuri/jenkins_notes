@@ -108,6 +108,21 @@ docker container run --publish 8081:80 --detach --name webhost nginx
 docker container run -d -p 8081:80 image-name --name webhost-nginx
 in browser past the ip add.
 ================================================================================
+exec
+----
+this command is used when the container is up and running and used when a command has to be given
+
+-it
+---
+-it(input, output in termenal)
+-i (accept input standred)
+-t (shoe the output in terminal)
+
+docker run redis
+docker exec -it redis-id redis-cli (single comanda exec)-it(input, output in termenal)
+docker exec -it container-id sh (SH lets inside access of the container in shell)
+docker run -it image-name sh
+================================================================================
 docker container inspect
 ------------------------
 docker container inspect <container-id>
@@ -148,8 +163,6 @@ docker run -d -p 8080:80 <inage-name>:<tag>
 docker volumes
 ---------------
 docker volumes ls
-sudo ls /mnt/wsl/docker-desktop-data/data/docker/volume(in windows --volumes location)
-\\wsl$\docker-desktop-data\mnt\wsl\docker-desktop-data\data\docker\volumes
 
 docker volume ls
 docker volume create myvolume-1
@@ -157,14 +170,35 @@ docker inspect myvolume-1
 docker volume rm myvolume-1 
 docker volume prune(remove all volumes)
 
-docker run -d --name mysql-test -e MYSQL_ALLOW_EMPTY PASSWORD=true mysql
-docker run -d --name mysql-test -e MYSQL_ALLOW_EMPTY PASSWORD=true --mount source=mysql-volume,destination=/var/lib/mysql/ mysql
+for wsl
+-------
+sudo ls /mnt/wsl/docker-desktop-data/data/docker/volume(in windows --volumes location)
+\\wsl$\docker-desktop-data\mnt\wsl\docker-desktop-data\data\docker\volumes
 
-docker run -d -p 3306:3306 --name mysqldb --env MYSQL_ROOT_PASSWORD=yes mysql 
+
+docker run -d --name my-nginx -v my-volume:/usr/share/nginx/html nginx
+docker run -d --name mysql-test -e MYSQL_ROOT_PASSWORD=mypassword mysql:latest
+docker run -d --name mysql-test -e "MYSQL_ROOT_PASSWORD=mypassword" --mount type=volume,source=mysql-db,destination=/var/lib/mysql mysql
+docekr exec -it mysql-test bash
+apt-get install mysql-client -y
+mysql -u root -p mypassword -h 172.17.0.2 -P 3306
+
+create db in mysql
+------------------
+create database prithvi_db;
+CREATE TABLE Persons ( PersonID int, LastName varchar(255), FirstName varchar(255), Address varchar(255), City varchar(255) );
+INSERT INTO Persons (PersonID, LastName, FirstName, Address, City)VALUES (14, 'B. Erichsen', ’Tom’, ‘Skagen 216’, 'Norway');
+INSERT INTO Persons (PersonID, LastName, FirstName, Address, City)VALUES (17, 'Zbyszek', ’Wolski’, ‘Keskuskatu 45’, ‘Finland'); 
+
+bind mount
+----------
+docker run -d -p 80:80 --name nginx-bind --mount type=bind,src="$(pwd)",target=/usr/share/nginx/html nginx
+
+--------------
+Connect to MySQL from the MySQL command line client
+docker run -it --network some-network --rm mysql mysql -hsome-mysql -uexample-user -p
+docker run -it --rm mysql-client mysql -h 172.17.0.2 -p 3306
 <<docker logs <container-id> for mysqldb passpwod>>
-
-docker container run -d -p 3306:3306 --name mysqldb --env MYSQL_RANDOM_ROOT_PASSWORD=yes mysql
-
 ================================================================================
 dockerfile
 ----------
@@ -172,22 +206,100 @@ docker build -t prithvi/prithvi .
 docker run -d -p 8080:8080 --name prithvisuri nginx
 
 ================================================================================
-exec
-----
-this command is used when the container is up and running and used when a command has to be given
+docker-compose
+--------------
+version: '3' #Version of YML file
 
--it
----
--it(input, output in termenal)
--i (accept input standred)
--t (shoe the output in terminal)
+services:
+  db:
+    image: mysql:5.7
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: mypassword
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpressuser
+      MYSQL_PASSWORD: wordpress
 
-docker run redis
-docker exec -it redis-id redis-cli (single comanda exec)-it(input, output in termenal)
-docker exec -it container-id sh (SH lets inside access of the container in shell)
-docker run -it image-name sh
+  wordpress:
+    depend-on:
+      - db
+    image: wordpress:latest
+    ports:
+      - "8080:80"
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpressuser
+      WORDPRESS_DB_PASSWORD: wordpress
+
+volumes:
+  db_data:
 ================================================================================
-================================================================================
+docker swarm
+------------
+
+docekr info | grep -i swarm >> to check its active or inactive
+
+docker swarm init>> Swarm initialized: current node (zhi8a4e3n8nlev7c8h79v3bgc) is now a manager.
+docker swarm join --token SWMTKN-1-0pebs9ziqc93lgs9qjyi1w2rk3l1romiodrifmsyv3dv1dqu68-7mt8836vpsrbtislfk3np2r3n 192.168.65.3:2377 >> (past it in the nodes)
+docker swarm leave --force
+docker node ls
+
+docker service create -p 80:80 --name web nginx
+docker service create --replicas=4 -p 80:80 --name web nginx
+docker service create -p 80:80 --name --mode=globle web nginx
+docker service update --image nginx:1.17.0 web
+docker service update --rollback web
+docker service update --update-failure-action=rollback web
+docker service scale web=3
+docker service ls
+docker service ps web
+docekr service inspect <node-id> |grep containerID
+docekr service inspect --pretty webhost-nginx
+docker service rm web >> delet the swarm
+
+docker node promote <ip-add of the node> to make it reachable
+docker node update --availability drain <node-ip> to make it unreachable (for master) (no containers in the mechine)
+
+
+swarm compose file
+-------------------
+
+version: "3"
+
+service: 
+    nginx-image:
+        image: nginx
+        port:
+            - 80:90
+        volumes:
+            - /tmp/:/usr/share/nginx/html
+        deploy:
+            mode:replicated
+            replicas: 2
+		configs:
+		   - src: sample.conf
+		   target: /tmp/sample.conf
+		   mode: 0755
+		configs:
+		  sample.conf:
+		  external: true
+
+docker stack deploy -c docker-compose.yml web
+
+docker stack ls
+
+docker stack ps
+
+docker stack service <stackname>
+docker stack rm <stackname>
+
+docker config create test-config sample.conf
+docker config ls
+docker service create -p 80:80 --name web --config src-test-config,target=/tmp/sample.conf nginx
+
 ================================================================================
 docker commit contianer-id prithvisuri/test-image (to create a image from container)
 
