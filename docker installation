@@ -242,22 +242,52 @@ docker swarm
 
 docekr info | grep -i swarm >> to check its active or inactive
 
+ifconfig -a
+
+Swarm initialization
+--------------------
 docker swarm init>> Swarm initialized: current node (zhi8a4e3n8nlev7c8h79v3bgc) is now a manager.
+docker swarm init --advertise-addr <ip-add>
+
+ docker swarm join-token worker
+  docker swarm join-token manager
+
+docekr swarm --help
+docker node --help
+docekr service --help
+
+docker service ls
+docker service ps web
+docker service inspect web
+
 docker swarm join --token SWMTKN-1-0pebs9ziqc93lgs9qjyi1w2rk3l1romiodrifmsyv3dv1dqu68-7mt8836vpsrbtislfk3np2r3n 192.168.65.3:2377 >> (past it in the nodes)
 docker swarm leave --force
 docker node ls
 
+create swarm
+-------------
+docker service create alpine ping www.googke.com
 docker service create -p 80:80 --name web nginx
 docker service create --replicas=4 -p 80:80 --name web nginx
 docker service create -p 80:80 --name --mode=globle web nginx
+
 docker service update --image nginx:1.17.0 web
+docker service update <service-nmae=web> --replicas 4
 docker service update --rollback web
 docker service update --update-failure-action=rollback web
+
 docker service scale web=3
-docker service ls
-docker service ps web
+	
 docekr service inspect <node-id> |grep containerID
 docekr service inspect --pretty webhost-nginx
+
+create a overlay network
+-------------------------
+docker network create -d(--dirver) overlay <network-name>
+docker network ls
+docker service create --name my-postgress --network my_overlay -e POSTGRESS_PASSWORD=mypassword postgress
+docker service create --name mydrupal --network my_overlay -p 80:80 drupal
+
 docker service rm web >> delet the swarm
 
 docker node promote <ip-add of the node> to make it reachable
